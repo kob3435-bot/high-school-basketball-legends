@@ -22,7 +22,7 @@ export function fitLabel(p: Player, slot: Pos): { label: string; cls: string } {
   if (p.pos === slot || p.pos2 === slot) return { label: 'Natural', cls: 'fit-good' };
   if (d > -3) return { label: 'Good fit', cls: 'fit-good' };
   if (d > -9) return { label: 'Out of position', cls: 'fit-mid' };
-  return { label: 'Mismatch', cls: 'fit-bad' };
+  return { label: 'Poor fit', cls: 'fit-bad' };
 }
 
 function blankTeam(): TeamConfig {

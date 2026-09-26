@@ -144,11 +144,11 @@ describe('Game clock, quarters, overtime', () => {
     expect(m.st.period).toBe(5);
     expect(m.st.clock).toBe(300);
     expect(m.st.events.some((e) => e.type === 'overtime')).toBe(true);
-    while (!(m.st.period === 5 && m.st.clock <= 0)) m.step();
+    while (!((m.st.period as number) === 5 && m.st.clock <= 0)) m.step();
     const tie2 = Math.max(t0.score, t1.score);
     fix(t0, tie2); fix(t1, tie2);
     m.step();
-    expect(m.st.period).toBe(6);
+    expect(m.st.period as number).toBe(6);
     m.simToEnd();
     expect(m.st.teams[0].score).not.toBe(m.st.teams[1].score);
     expect(m.st.overtimes).toBeGreaterThanOrEqual(2);

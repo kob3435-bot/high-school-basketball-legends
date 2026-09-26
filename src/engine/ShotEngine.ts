@@ -120,16 +120,21 @@ export function ftProbability(st: MatchState, t: TeamRT, p: Player): number {
   return clamp(prob, 0.3, 0.95);
 }
 
+/** Shot location in attacking-half coordinates: x = metres-from-baseline / 14, y = metres-from-sideline / 15. Rim at (1.575 m, 7.5 m). */
 export function shotZone(type: ShotType, r1: number, r2: number): { x: number; y: number } {
-  // x: 0 baseline/rim .. 1 half court; y: 0..1 sideline to sideline. Rim at (0.11, 0.5)
+  const rimX = 1.575, rimY = 7.5;
+  const polar = (rMin: number, rMax: number, aMax: number) => {
+    const a = (r1 * 2 - 1) * aMax;
+    const r = rMin + r2 * (rMax - rMin);
+    const X = Math.max(0.3, rimX + Math.cos(a) * r), Y = Math.min(14.2, Math.max(0.8, rimY + Math.sin(a) * r));
+    return { x: X / 14, y: Y / 15 };
+  };
   switch (type) {
-    case 'dunk': case 'layup': return { x: 0.1 + r1 * 0.05, y: 0.45 + r2 * 0.1 };
-    case 'post': return { x: 0.12 + r1 * 0.08, y: r2 < 0.5 ? 0.38 : 0.62 };
-    case 'floater': return { x: 0.2 + r1 * 0.08, y: 0.4 + r2 * 0.2 };
-    case 'mid': return { x: 0.22 + r1 * 0.14, y: 0.2 + r2 * 0.6 };
-    case 'three': {
-      const a = (r1 - 0.5) * Math.PI * 0.95;
-      return { x: 0.11 + Math.cos(a) * 0.32 + (r2 * 0.03), y: 0.5 + Math.sin(a) * 0.46 };
-    }
+    case 'dunk': return polar(0.2, 0.6, 1.2);
+    case 'layup': return polar(0.4, 1.3, 1.3);
+    case 'post': return polar(1.6, 2.8, 1.1);
+    case 'floater': return polar(2.6, 3.8, 1.0);
+    case 'mid': return polar(3.8, 5.8, 1.35);
+    case 'three': return polar(6.9, 7.8, 1.45);
   }
 }

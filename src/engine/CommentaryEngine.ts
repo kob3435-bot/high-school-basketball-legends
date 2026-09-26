@@ -90,8 +90,9 @@ export function emit(st: MatchState, e: Partial<SimEvent> & { type: SimEvent['ty
   };
   const text = e.text ?? describe(st, base as any);
   const ev: SimEvent = { ...(base as any), text };
-  delete (ev as any).kind; delete (ev as any).n; delete (ev as any).of; delete (ev as any).tactic;
-  if (e.kind) (ev as any).kind = e.kind;
+  delete (ev as any).tactic;
+  ev.tf = [st.teams[0].teamFouls, st.teams[1].teamFouls];
+  ev.to = [st.teams[0].timeouts, st.teams[1].timeouts];
   st.buffer.push(ev);
   if (st.keepEvents) st.events.push(ev);
   return ev;

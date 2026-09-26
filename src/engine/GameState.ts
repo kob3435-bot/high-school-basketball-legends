@@ -94,7 +94,7 @@ export function createMatch(a: TeamConfig, b: TeamConfig, seed: number, opts: { 
   const st = createMatchRaw(a, b, seed, cpu, auto, opts.keepEvents ?? true);
   // "Day form": every player has a good or bad night — inconsistent players swing more. Team form too.
   for (const t of st.teams) {
-    const teamForm = st.rng.gauss(0, 0.026);
+    const teamForm = st.rng.gauss(0, 0.032);
     for (const id of t.roster) t.form[id] = teamForm + st.rng.gauss(0, 0.032 * (1.35 - t.players[id].attrs.consistency / 100));
   }
   return st;

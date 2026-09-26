@@ -1,6 +1,7 @@
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { runBatch, summary, pair, extremeTeam, superstarTeam, gen, lineupProsCons } from '../src/engine/Balance';
 import type { Pos } from '../src/engine/types';
+import { teamOverall } from '../src/engine/Team';
 
 const N = Number(process.env.N ?? 1000);
 const NB = Number(process.env.NB ?? 200);
@@ -39,12 +40,16 @@ const bal: [string, ReturnType<typeof summary>][] = [
   ['Strong v Average', summary(runBatch(NB, pair('Balanced', 'Strong', 'Balanced', 'Average'), 12))],
   ['Average v Average', summary(runBatch(NB, pair('Balanced', 'Average', 'Balanced', 'Average'), 13))],
   ['Weak v Strong', summary(runBatch(NB, pair('Balanced', 'Weak', 'Balanced', 'Strong'), 14))],
+  ['Weak v Average', summary(runBatch(NB, pair('Balanced', 'Weak', 'Balanced', 'Average'), 19))],
+  ['Average v Strong', summary(runBatch(NB, pair('Balanced', 'Average', 'Balanced', 'Strong'), 21))],
   ['Small Ball v Twin Towers', summary(runBatch(NB, pair('Small Ball', 'Average', 'Twin Towers', 'Average'), 15))],
   ['Three-Point Army v Inside Dominance', summary(runBatch(NB, pair('Three-Point Army', 'Average', 'Inside Dominance', 'Average'), 16))],
   ['Defense First v Run & Gun', summary(runBatch(NB, pair('Defense First', 'Average', 'Run & Gun', 'Average'), 17))],
   ['Super Team v Balanced Strong', summary(runBatch(NB, pair('Super Team', 'Elite', 'Balanced', 'Strong'), 18))],
 ];
 table(bal);
+const lvl = (['Weak', 'Average', 'Strong', 'Elite'] as const).map((l) => { let t = 0; for (let i = 0; i < 60; i++) t += teamOverall(gen(1000 + i, 'Balanced', l)); return `${l} ≈ ${(t / 60).toFixed(1)}`; });
+lines.push('', `Average team overall by CPU strength level (Balanced template): ${lvl.join(', ')}. Weak-vs-Strong is a ~16-point overall gap, so upsets there are rare by design; one-tier gaps (Weak v Average, Average v Strong) produce regular upsets.`);
 lines.push('');
 
 // 3) extreme lineups

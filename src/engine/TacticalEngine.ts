@@ -15,7 +15,7 @@ interface DefMod { w: Partial<Record<HalfPlay, number>>; insideContest: number; 
 export const OFF_MODS: Record<OffTactic, OffMod> = {
   'Balanced': { w: {}, trans: 1, dur: 1, oreb: 1, to: 1, fatigue: 1, passes: 0, open: 0, assist: 1 },
   'Fast Break': { w: { drive: 1.15 }, trans: 1.65, dur: 0.93, oreb: 0.85, to: 1.03, fatigue: 1.06, passes: 0, open: 0, assist: 1 },
-  'Run & Gun': { w: { spot: 1.4, mid: 0.8, post: 0.6, drive: 1.1 }, trans: 1.5, dur: 0.8, oreb: 0.85, to: 1.07, fatigue: 1.12, passes: -0.5, open: -0.02, assist: 0.95 },
+  'Run & Gun': { w: { spot: 1.4, mid: 0.8, post: 0.6, drive: 1.1 }, trans: 1.45, dur: 0.86, oreb: 0.85, to: 1.07, fatigue: 1.12, passes: -0.5, open: -0.02, assist: 0.95 },
   'Inside Focus': { w: { post: 2.0, drive: 1.5, cut: 1.3, spot: 0.6, mid: 0.7, iso: 0.8 }, trans: 0.95, dur: 1.05, oreb: 1.12, to: 1.02, fatigue: 1.02, passes: 0, open: 0, assist: 1 },
   'Perimeter Focus': { w: { spot: 1.9, mid: 1.2, pnr: 1.1, post: 0.5, drive: 0.8, cut: 0.7 }, trans: 1, dur: 1, oreb: 0.92, to: 0.98, fatigue: 1, passes: 0.5, open: 0.02, assist: 1.05 },
   'Pick & Roll': { w: { pnr: 2.6, iso: 0.8, post: 0.8, drive: 0.9, spot: 0.9, cut: 0.8, mid: 0.8 }, trans: 1, dur: 1.02, oreb: 1, to: 1, fatigue: 1, passes: 0, open: 0.01, assist: 1.05 },
@@ -35,9 +35,9 @@ export const DEF_MODS: Record<DefTactic, DefMod> = {
 };
 
 export const PACE_MODS: Record<Pace, { dur: number; trans: number; fatigue: number; to: number }> = {
-  Slow: { dur: 1.2, trans: 0.7, fatigue: 0.9, to: 0.95 },
+  Slow: { dur: 1.08, trans: 0.7, fatigue: 0.9, to: 0.95 },
   Normal: { dur: 1, trans: 1, fatigue: 1, to: 1 },
-  Fast: { dur: 0.88, trans: 1.3, fatigue: 1.12, to: 1.06 },
+  Fast: { dur: 0.9, trans: 1.25, fatigue: 1.12, to: 1.06 },
 };
 
 /** Tactic "execution" boost from players like Tactical Commander / Game Controller on the floor. */
@@ -81,14 +81,15 @@ export function playWeights(o: TeamRT, d: TeamRT, prof: LineupProfile, chem: Che
 /** Seconds from start of half-court possession to the final action. */
 export function possessionDuration(st: MatchState, o: TeamRT, d: TeamRT, rng: RNG): number {
   const om = offMod(o), dm = defMod(d), pm = PACE_MODS[o.tactics.pace];
-  let mean = 17.6 * om.dur * dm.dur * pm.dur;
+  // stacked tempo modifiers are capped so even run & gun vs a press stays within realistic 40-minute tempo
+  let mean = 18.2 * clamp(om.dur * dm.dur * pm.dur, 0.87, 1.08);
   // Late game clock management
   const mg = o.score - d.score;
   if (st.period >= 4 && st.clock < 150) {
     if (mg > 0) mean = 21; // milk the clock
     else if (mg < 0) mean = Math.min(mean, 9);
   }
-  let dur = clamp(rng.gauss(mean, 5), 4, 23.8);
+  let dur = clamp(rng.gauss(mean, 3.0), 4, 22.6);
   return dur;
 }
 
@@ -100,5 +101,5 @@ export function transitionChance(st: MatchState, o: TeamRT, d: TeamRT, prof: Lin
   let fb = 0;
   for (const id of o.onCourt) if (id) fb += sig(o.players[id]).fastBreak ?? 0;
   const p = base * om.trans * pm.trans * dm.transAllowed * (1 + speed + handler) + chem.mods.transition * (cause === 'steal' ? 1 : 0.5) + fb;
-  return clamp(p, 0.02, 0.7);
+  return clamp(p, 0.02, cause === 'steal' ? 0.7 : 0.4);
 }

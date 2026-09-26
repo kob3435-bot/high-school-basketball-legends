@@ -1,5 +1,8 @@
-node_modules
-dist
-test-results
-playwright-report
 .DS_Store
+dist
+node_modules
+playwright-report
+playwright-report/
+scratch/
+test-results
+test-results/

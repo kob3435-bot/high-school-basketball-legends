@@ -1,5 +1,7 @@
-import type { TeamConfig, Tactics, Player } from './types';
-import { PLAYER_MAP } from './db';
+import type { TeamConfig, Tactics, Player, Pos } from './types';
+import { PLAYER_MAP, PLAYERS } from './db';
+import { RNG } from './rng';
+import { slotFit } from './Player';
 
 export const DEFAULT_TACTICS: Tactics = { offense: 'Balanced', defense: 'Man-to-Man', pace: 'Normal' };
 
@@ -40,3 +42,21 @@ export function newTeamId(prefix = 't'): string {
 export function cloneTeam(t: TeamConfig): TeamConfig {
   return JSON.parse(JSON.stringify(t));
 }
+
+/** Fill the bench up to `target` players with positional coverage (guard, big, wing...). */
+export function autoFillBench(t: TeamConfig, target = 5, seed = Date.now()): TeamConfig {
+  const used = new Set([...t.starters, ...t.bench].filter(Boolean));
+  const rng = new RNG(seed);
+  const bench = [...t.bench];
+  const need: Pos[] = ['PG', 'C', 'SF', 'SG', 'PF', 'SF', 'C'];
+  let i = 0;
+  while (bench.length < target && i < 20) {
+    const slot = need[i % need.length]; i++;
+    const cands = PLAYERS.filter((p) => !used.has(p.id)).sort((a, b) => slotFit(b, slot) - slotFit(a, slot)).slice(0, 8);
+    if (!cands.length) break;
+    const p = rng.pick(cands);
+    bench.push(p.id); used.add(p.id);
+  }
+  return { ...t, bench };
+}
+

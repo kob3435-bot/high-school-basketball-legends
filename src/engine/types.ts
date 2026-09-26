@@ -126,6 +126,11 @@ export interface SimEvent {
   text: string;
   score: [number, number];
   big?: boolean; // highlight-worthy
+  kind?: string;
+  n?: number;
+  of?: number;
+  tf?: [number, number]; // team fouls snapshot
+  to?: [number, number]; // timeouts snapshot
 }
 
 export interface PlayerGameStats {

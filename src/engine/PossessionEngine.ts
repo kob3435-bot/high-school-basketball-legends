@@ -403,7 +403,8 @@ function halfCourt(st: MatchState, c: Ctx, bringUp: boolean, maxDur: number): Re
   if (!ps.length) { tick(st, Math.min(st.clock, 24)); return 'tov'; }
   const handler = prof.handler && o.onCourt.includes(prof.handler.id) ? prof.handler : ps[0];
   let used = 0;
-  let dur = Math.min(maxDur, possessionDuration(st, o, d, rng));
+  // full possessions use the tactical tempo; partial clocks (after an offensive rebound or a reset) use part of what is left
+  let dur = maxDur >= 20 ? Math.min(maxDur, possessionDuration(st, o, d, rng)) : Math.max(1.5, maxDur * rng.range(0.35, 0.92));
   // End of period: hold for the last shot
   const lastShot = st.clock <= 24.5;
   if (lastShot) dur = Math.max(0.5, st.clock - rng.range(0.4, 2.5));
@@ -540,7 +541,7 @@ export function runPossession(st: MatchState): void {
     } else {
       result = halfCourt(st, c, phase === 'start', phase === 'half' ? Math.max(4, st.shotClock - 0.5) : 24);
     }
-    if (result === 'oreb') { phase = 'second'; c.second = true; continue; }
+    if (result === 'oreb') { phase = 'second'; c.second = true; st.shotClock = 14; continue; }
     if (result === 'reset') { st.shotClock = Math.max(st.shotClock, 14); phase = 'half'; continue; }
     break;
   }

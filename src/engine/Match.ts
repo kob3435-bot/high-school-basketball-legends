@@ -12,6 +12,7 @@ export interface MatchOptions { userTeam?: 0 | 1 | null; autoSubUser?: boolean; 
 
 export class MatchSim {
   st: MatchState;
+  private afterTimeout = false;
   userTeam: 0 | 1 | null;
   mode: string;
   constructor(a: TeamConfig, b: TeamConfig, seed: number, opts: MatchOptions = {}) {
@@ -34,7 +35,11 @@ export class MatchSim {
     if (st.status === 'final') return [];
     if (st.status === 'pregame') { this.tipoff(); return st.buffer; }
     if (st.clock <= 0) { this.endPeriod(); return st.buffer; }
-    if (st.deadBall) this.deadBall();
+    if (st.deadBall) {
+      // A timeout is its own step so the UI can stop play before the next possession is simulated.
+      if (this.deadBall(this.afterTimeout)) { this.afterTimeout = true; return st.buffer; }
+    }
+    this.afterTimeout = false;
     runPossession(st);
     return st.buffer;
   }
@@ -72,18 +77,23 @@ export class MatchSim {
     if (t.isCPU) { coachAdjust(st, t, true); autoSubs(st, t, 5); }
   }
 
-  private deadBall() {
+  /** Dead-ball management. Returns true if a timeout was called (caller ends the step there). */
+  private deadBall(skipTimeouts = false): boolean {
     const st = this.st;
-    for (const t of st.teams) {
-      if (t.pendingTimeout && t.timeouts > 0) this.callTimeout(t, '');
+    let called = false;
+    if (!skipTimeouts) for (const t of st.teams) {
+      if (called) break;
+      if (t.pendingTimeout && t.timeouts > 0) { this.callTimeout(t, ''); called = true; }
       else if (t.pendingTimeout) t.pendingTimeout = false;
-      else if (t.isCPU) { const why = wantsTimeout(st, t); if (why) this.callTimeout(t, why); }
+      else if (t.isCPU) { const why = wantsTimeout(st, t); if (why) { this.callTimeout(t, why); called = true; } }
     }
+    if (called) return true;
     for (const t of st.teams) if (t.pendingSubs.length) applyPendingSubs(st, t);
     for (const t of st.teams) {
       if (t.isCPU) coachAdjust(st, t);
       if (t.isCPU || t.autoSub) autoSubs(st, t);
     }
+    return false;
   }
 
   private endPeriod() {

@@ -116,3 +116,33 @@ test('a 5-center lineup and a 5-guard lineup both play a full game', async ({ pa
     await expect(page.getByTestId('box-table')).toBeVisible();
   }
 });
+
+test('stress: three consecutive live games played to the buzzer at high speed with auto-sub OFF', async ({ page }) => {
+  test.setTimeout(400_000);
+  await freshHome(page);
+  await page.getByTestId('menu-quick').click();
+  await page.getByTestId('randomize-team').click();
+  await toLiveMatch(page);
+  for (let g = 0; g < 3; g++) {
+    await page.getByTestId('autosub-toggle').click();
+    await expect(page.getByTestId('autosub-toggle')).toHaveText('Auto-sub OFF');
+    await setSimSpeed(page, 120);
+    await expect(page.getByTestId('halftime-modal')).toBeVisible({ timeout: 120_000 });
+    await page.getByTestId('resume-btn').click();
+    await setSimSpeed(page, 120);
+    await expect(page.getByTestId('final-overlay')).toBeVisible({ timeout: 120_000 });
+    // with auto-sub off, the user team only substitutes when forced by a foul-out
+    const info = await page.evaluate(() => {
+      const st = (window as any).__hsbl.sim.st;
+      const ev = st.events as any[];
+      const subs = ev.filter((e) => e.type === 'sub' && e.team === 0);
+      const fouls = ev.filter((e) => e.type === 'foulOut' && e.team === 0);
+      return { subs: subs.length, foulOuts: fouls.length, final: [st.teams[0].score, st.teams[1].score] };
+    });
+    expect(info.subs).toBeLessThanOrEqual(info.foulOuts);
+    await page.getByTestId('view-results').click();
+    await expect(page.getByTestId('result-score')).toHaveText(`${info.final[0]} – ${info.final[1]}`);
+    await page.getByTestId('play-again').click();
+    await page.getByTestId('start-game').click();
+  }
+});

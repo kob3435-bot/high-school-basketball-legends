@@ -71,7 +71,7 @@ export function Radar({ p, size = 220 }: { p: Player; size?: number }) {
   const cx = 110, cy = 110, R = 80;
   const pt = (i: number, v: number) => { const a = -Math.PI / 2 + (i / groups.length) * Math.PI * 2; return [cx + Math.cos(a) * R * (v / 100), cy + Math.sin(a) * R * (v / 100)]; };
   return (
-    <svg width={size} height={size} viewBox="0 0 220 220" class="radar" role="img" aria-label="Attribute radar chart">
+    <svg width={size * 1.3} height={size} viewBox="-33 0 286 220" class="radar" role="img" aria-label="Attribute radar chart">
       {[25, 50, 75, 100].map((r) => <polygon points={groups.map((_, i) => pt(i, r).join(',')).join(' ')} fill="none" stroke="#ddd" />)}
       {groups.map((_, i) => { const [x, y] = pt(i, 100); return <line x1={cx} y1={cy} x2={x} y2={y} stroke="#e5e5e5" />; })}
       <polygon points={vals.map((v, i) => pt(i, v).join(',')).join(' ')} fill="rgba(200,16,46,0.28)" stroke="#c8102e" stroke-width="2" />

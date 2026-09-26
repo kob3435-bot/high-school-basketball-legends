@@ -13,5 +13,5 @@ export default defineConfig({
   reporter: [['list']],
   use: { baseURL: BASE, headless: true, trace: 'retain-on-failure', screenshot: 'only-on-failure', ...devices['Desktop Chrome'], viewport: { width: 1366, height: 900 } },
   webServer: isProd ? undefined : { command: 'npx vite build && npx vite preview --port 4173 --strictPort', url: 'http://localhost:4173/', reuseExistingServer: true, timeout: 120_000 },
-  testMatch: isProd ? /prod\.spec\.ts$/ : /^(?!.*prod\.spec).*\.spec\.ts$/,
+  testMatch: isProd ? (process.env.PROD_FULL ? /(prod|gameplay|modes|responsive)\.spec\.ts$/ : /prod\.spec\.ts$/) : /^(?!.*prod\.spec).*\.spec\.ts$/,
 });
